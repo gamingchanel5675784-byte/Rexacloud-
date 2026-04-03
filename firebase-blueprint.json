@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "Plan": {
+      "title": "Hosting Plan",
+      "description": "A cloud hosting plan offered by Rexa Cloud.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the plan (e.g., Starter, Premium)."
+        },
+        "price": {
+          "type": "string",
+          "description": "The price of the plan (e.g., ₹199)."
+        },
+        "period": {
+          "type": "string",
+          "description": "The billing period (e.g., /mo)."
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of features included in the plan."
+        },
+        "popular": {
+          "type": "boolean",
+          "description": "Whether this plan is marked as popular."
+        },
+        "order": {
+          "type": "integer",
+          "description": "The display order of the plan."
+        }
+      },
+      "required": ["name", "price", "features"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "A user of the Rexa Cloud platform.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "user"],
+          "description": "The role of the user."
+        }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/plans": {
+      "schema": "Plan",
+      "description": "Collection of hosting plans."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents."
+    }
+  }
+}
