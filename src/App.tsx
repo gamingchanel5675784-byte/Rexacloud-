@@ -698,14 +698,6 @@ const TrustedBy = () => {
               Powering the next generation of digital experiences across the globe.
             </p>
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 w-full opacity-30 grayscale hover:grayscale-0 transition-all duration-700">
-            {['INTEL', 'AMD', 'SAMSUNG', 'NVIDIA', 'CISCO'].map((brand) => (
-              <div key={brand} className="flex items-center justify-center p-8 glass-card luxury-border group hover:bg-white/5 transition-all">
-                <span className="text-xl lg:text-2xl font-display font-black tracking-tighter text-white group-hover:text-brand-primary transition-colors cursor-default">{brand}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </section>
