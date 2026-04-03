@@ -57,7 +57,7 @@ const Banner = ({ settings }: { settings: BannerSettings | null }) => {
   const [visible, setVisible] = useState(true);
   const [copied, setCopied] = useState(false);
   
-  if (!settings?.active || !visible) return null;
+  if (!settings?.active) return null;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(settings.code);
@@ -69,9 +69,10 @@ const Banner = ({ settings }: { settings: BannerSettings | null }) => {
     <AnimatePresence>
       {visible && (
         <motion.div 
-          initial={{ y: -48 }}
-          animate={{ y: 0 }}
-          exit={{ y: -48 }}
+          initial={{ y: -48, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -48, opacity: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-[100] bg-brand-primary h-12 flex items-center justify-center overflow-hidden"
         >
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
@@ -128,6 +129,7 @@ interface Plan {
 
 const Navbar = ({ user, isAdmin, onAdminToggle, showAdmin }: { user: User | null, isAdmin: boolean, onAdminToggle: () => void, showAdmin: boolean }) => {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -135,64 +137,154 @@ const Navbar = ({ user, isAdmin, onAdminToggle, showAdmin }: { user: User | null
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const navLinks = [
+    { name: 'Home', href: '#' },
+    { name: 'Infrastructure', href: '#features' },
+    { name: 'Pricing', href: '#plans' },
+    { name: 'Our Panel', href: PANEL_LINK, external: true },
+    { name: 'Discord', href: DISCORD_LINK, external: true },
+  ];
+
   return (
     <nav className={cn(
-      "fixed top-0 left-0 right-0 z-50 transition-all duration-700 px-4 sm:px-6 lg:px-8 py-6",
+      "fixed top-0 left-0 right-0 z-[100] transition-all duration-700 px-4 sm:px-6 lg:px-8 py-6",
       scrolled ? "bg-black/80 backdrop-blur-3xl border-b border-white/5 py-4" : "bg-transparent"
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-12">
           <a href="/" className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-12 h-12 premium-gradient rounded-2xl flex items-center justify-center shadow-2xl shadow-brand-primary/40 group-hover:scale-110 transition-transform duration-500">
-              <Server className="text-white w-7 h-7" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 premium-gradient rounded-2xl flex items-center justify-center shadow-2xl shadow-brand-primary/40 group-hover:scale-110 transition-transform duration-500">
+              <Server className="text-white w-5 h-5 sm:w-7 sm:h-7" />
             </div>
-            <span className="text-3xl font-display font-black tracking-tighter text-white">Rexa<span className="text-brand-primary">Cloud</span></span>
+            <span className="text-2xl sm:text-3xl font-display font-black tracking-tighter text-white">Rexa<span className="text-brand-primary">Cloud</span></span>
           </a>
           
           <div className="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
-            <a href="#" className="hover:text-white transition-colors">Home</a>
-            <a href="#features" className="hover:text-white transition-colors">Infrastructure</a>
-            <a href="#plans" className="hover:text-white transition-colors">Pricing</a>
-            <a href={PANEL_LINK} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Our Panel</a>
-            <a href={DISCORD_LINK} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Discord</a>
+            {navLinks.map(link => (
+              <a 
+                key={link.name}
+                href={link.href} 
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noopener noreferrer" : undefined}
+                className="hover:text-white transition-colors"
+              >
+                {link.name}
+              </a>
+            ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          {user ? (
-            <div className="flex items-center gap-6">
-              {isAdmin && (
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="hidden sm:flex items-center gap-6">
+            {user ? (
+              <div className="flex items-center gap-6">
+                {isAdmin && (
+                  <button 
+                    onClick={onAdminToggle}
+                    className={cn(
+                      "px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all",
+                      showAdmin ? "bg-white text-black" : "bg-brand-primary/10 text-brand-primary border border-brand-primary/20 hover:bg-brand-primary/20"
+                    )}
+                  >
+                    {showAdmin ? 'Exit Console' : 'Admin Console'}
+                  </button>
+                )}
+                <div className="hidden lg:flex flex-col items-end">
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">{user.displayName}</span>
+                  <span className="text-[8px] font-bold text-brand-primary uppercase tracking-[0.2em]">{isAdmin ? 'Administrator' : 'Client'}</span>
+                </div>
                 <button 
-                  onClick={onAdminToggle}
-                  className={cn(
-                    "px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all",
-                    showAdmin ? "bg-white text-black" : "bg-brand-primary/10 text-brand-primary border border-brand-primary/20 hover:bg-brand-primary/20"
-                  )}
+                  onClick={() => auth.signOut()}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/[0.08] transition-all luxury-border"
                 >
-                  {showAdmin ? 'Exit Console' : 'Admin Console'}
+                  <LogOut className="w-5 h-5" />
                 </button>
-              )}
-              <div className="hidden sm:flex flex-col items-end">
-                <span className="text-[10px] font-black text-white uppercase tracking-widest">{user.displayName}</span>
-                <span className="text-[8px] font-bold text-brand-primary uppercase tracking-[0.2em]">{isAdmin ? 'Administrator' : 'Client'}</span>
               </div>
+            ) : (
               <button 
-                onClick={() => auth.signOut()}
-                className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/[0.08] transition-all luxury-border"
+                onClick={() => signInWithPopup(auth, new GoogleAuthProvider())}
+                className="btn-premium bg-white/[0.03] border border-white/5 text-[10px] font-black uppercase tracking-[0.4em] px-8 py-4 rounded-2xl luxury-border"
               >
-                <LogOut className="w-5 h-5" />
+                Client Login
               </button>
-            </div>
-          ) : (
-            <button 
-              onClick={() => signInWithPopup(auth, new GoogleAuthProvider())}
-              className="btn-premium bg-white/[0.03] border border-white/5 text-[10px] font-black uppercase tracking-[0.4em] px-10 py-4 rounded-2xl luxury-border"
-            >
-              Client Login
-            </button>
-          )}
+            )}
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-white hover:bg-white/[0.08] transition-all"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden absolute top-full left-0 right-0 bg-black/95 backdrop-blur-3xl border-b border-white/5 overflow-hidden"
+          >
+            <div className="px-8 py-12 space-y-8">
+              {navLinks.map(link => (
+                <a 
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  target={link.external ? "_blank" : undefined}
+                  rel={link.external ? "noopener noreferrer" : undefined}
+                  className="block text-2xl font-display font-black text-white tracking-tighter hover:text-brand-primary transition-colors"
+                >
+                  {link.name}
+                </a>
+              ))}
+              <div className="pt-8 border-t border-white/5 flex flex-col gap-6">
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full premium-gradient flex items-center justify-center text-white font-black">
+                        {user.displayName?.[0]}
+                      </div>
+                      <div>
+                        <p className="text-white font-black uppercase tracking-widest text-sm">{user.displayName}</p>
+                        <p className="text-brand-primary font-bold uppercase tracking-[0.2em] text-[10px]">{isAdmin ? 'Administrator' : 'Client'}</p>
+                      </div>
+                    </div>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => {
+                          onAdminToggle();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full py-4 rounded-xl bg-brand-primary text-white text-[10px] font-black uppercase tracking-[0.4em]"
+                      >
+                        {showAdmin ? 'Exit Admin Console' : 'Open Admin Console'}
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => auth.signOut()}
+                      className="w-full py-4 rounded-xl bg-white/[0.03] border border-white/5 text-slate-400 text-[10px] font-black uppercase tracking-[0.4em]"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => signInWithPopup(auth, new GoogleAuthProvider())}
+                    className="w-full py-5 rounded-2xl premium-gradient text-white text-[10px] font-black uppercase tracking-[0.4em] shadow-2xl shadow-brand-primary/40"
+                  >
+                    Client Login
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
@@ -200,27 +292,30 @@ const Navbar = ({ user, isAdmin, onAdminToggle, showAdmin }: { user: User | null
 // ... Navbar component ...
 
 const BackgroundDecorations = React.memo(() => {
-  const streams = React.useMemo(() => [...Array(25)].map(() => ({
+  const streams = React.useMemo(() => [...Array(30)].map(() => ({
     left: `${Math.random() * 100}%`,
     delay: `${Math.random() * 10}s`,
-    duration: `${4 + Math.random() * 6}s`,
-    opacity: 0.1 + Math.random() * 0.2
+    duration: `${3 + Math.random() * 5}s`,
+    opacity: 0.05 + Math.random() * 0.15
   })), []);
 
-  const shapes = React.useMemo(() => [...Array(8)].map(() => ({
+  const shapes = React.useMemo(() => [...Array(12)].map(() => ({
     left: `${Math.random() * 100}%`,
     top: `${Math.random() * 100}%`,
-    size: `${20 + Math.random() * 40}px`,
+    size: `${15 + Math.random() * 35}px`,
     delay: `${Math.random() * 5}s`,
-    duration: `${15 + Math.random() * 15}s`,
+    duration: `${10 + Math.random() * 20}s`,
     rotate: Math.random() * 360
   })), []);
 
-  const codeLines = React.useMemo(() => [...Array(10)].map(() => ({
+  const codeLines = React.useMemo(() => [...Array(25)].map(() => ({
     left: `${Math.random() * 100}%`,
     top: `${Math.random() * 100}%`,
     delay: `${Math.random() * 20}s`,
-    text: ['010101', 'EPYC', 'NVMe', '100G', 'DDoS', 'REXACLOUD'][Math.floor(Math.random() * 6)]
+    text: [
+      '010101', 'EPYC', 'NVMe', '100G', 'DDoS', 'REXACLOUD', 'CORE', 'NODE', 'VPS',
+      'INTEL', 'RYZEN', '99.9%', 'SLA', 'API', 'ROOT', 'SSH', 'PORT', 'PING', 'LATENCY'
+    ][Math.floor(Math.random() * 19)]
   })), []);
 
   return (
@@ -230,14 +325,33 @@ const BackgroundDecorations = React.memo(() => {
         <div className="w-full h-full texture-3d bg-[length:60px_60px]" />
       </div>
 
+      {/* Scanning Line */}
+      <motion.div 
+        animate={{ top: ['-10%', '110%'] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand-primary/20 to-transparent opacity-30 blur-sm"
+      />
+
+      {/* Circuit Lines */}
+      <svg className="absolute inset-0 w-full h-full opacity-[0.05]" xmlns="http://www.w3.org/2000/svg">
+        <pattern id="circuit" x="0" y="0" width="300" height="300" patternUnits="userSpaceOnUse">
+          <path d="M 0 150 L 75 150 L 112 112 L 187 112 L 225 150 L 300 150" fill="none" stroke="var(--color-brand-primary)" strokeWidth="1" />
+          <circle cx="75" cy="150" r="2" fill="var(--color-brand-primary)" />
+          <circle cx="225" cy="150" r="2" fill="var(--color-brand-primary)" />
+          <path d="M 150 0 L 150 75 L 112 112" fill="none" stroke="var(--color-brand-primary)" strokeWidth="1" />
+          <circle cx="150" cy="75" r="2" fill="var(--color-brand-primary)" />
+        </pattern>
+        <rect width="100%" height="100%" fill="url(#circuit)" />
+      </svg>
+
       {/* Floating Code Snippets */}
       {codeLines.map((line, i) => (
         <motion.div
           key={`code-${i}`}
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.1, 0] }}
-          transition={{ duration: 10, repeat: Infinity, delay: i * 2 }}
-          className="absolute font-mono text-[8px] font-black text-brand-primary tracking-[0.5em]"
+          animate={{ opacity: [0, 0.2, 0] }}
+          transition={{ duration: 10, repeat: Infinity, delay: i * 0.8 }}
+          className="absolute font-mono text-[8px] font-black text-brand-primary tracking-[0.8em]"
           style={{ left: line.left, top: line.top }}
         >
           {line.text}
@@ -250,16 +364,17 @@ const BackgroundDecorations = React.memo(() => {
           key={`shape-${i}`}
           initial={{ opacity: 0, rotate: shape.rotate }}
           animate={{ 
-            opacity: [0.05, 0.1, 0.05],
+            opacity: [0.03, 0.08, 0.03],
             rotate: shape.rotate + 360,
-            y: [0, -40, 0]
+            y: [0, -30, 0],
+            x: [0, 15, 0]
           }}
           transition={{ 
             duration: shape.duration, 
             repeat: Infinity, 
-            ease: "linear" 
+            ease: "easeInOut" 
           }}
-          className="absolute border border-brand-primary/20 rounded-lg"
+          className="absolute border border-brand-primary/10 rounded-sm"
           style={{
             left: shape.left,
             top: shape.top,
@@ -270,11 +385,11 @@ const BackgroundDecorations = React.memo(() => {
       ))}
 
       {/* Glow Orbs */}
-      <div className="glow-orb top-[-20%] left-[-10%] animate-drift opacity-20" />
-      <div className="glow-orb bottom-[-20%] right-[-10%] animate-drift opacity-20" style={{ animationDelay: '-5s' }} />
-      <div className="glow-orb top-[40%] left-[40%] animate-drift opacity-10" style={{ animationDelay: '-10s', width: '800px', height: '800px' }} />
+      <div className="glow-orb top-[-25%] left-[-15%] animate-drift opacity-20" />
+      <div className="glow-orb bottom-[-25%] right-[-15%] animate-drift opacity-20" style={{ animationDelay: '-5s' }} />
+      <div className="glow-orb top-[35%] left-[35%] animate-drift opacity-[0.08]" style={{ animationDelay: '-12s', width: '900px', height: '900px' }} />
       
-      <div className="scanline opacity-[0.05]" />
+      <div className="scanline opacity-[0.03]" />
       
       {/* Data Streams */}
       {streams.map((stream, i) => (
@@ -291,7 +406,7 @@ const BackgroundDecorations = React.memo(() => {
       ))}
 
       {/* Vignette */}
-      <div className="absolute inset-0 bg-radial-gradient(circle at center, transparent 0%, black 100%) opacity-40" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_black_100%)] opacity-50" />
     </div>
   );
 });
@@ -562,13 +677,35 @@ const Gallery = () => {
 
 const TrustedBy = () => {
   return (
-    <section className="py-24 bg-black border-y border-white/5 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-center text-[10px] font-black uppercase tracking-[0.5em] text-slate-600 mb-12">Trusted by Industry Leaders</p>
-        <div className="flex flex-wrap justify-center items-center gap-16 lg:gap-32 opacity-30 grayscale hover:grayscale-0 transition-all duration-700">
-          {['INTEL', 'AMD', 'SAMSUNG', 'NVIDIA', 'CISCO'].map((brand) => (
-            <span key={brand} className="text-2xl lg:text-4xl font-display font-black tracking-tighter text-white hover:text-brand-primary transition-colors cursor-default">{brand}</span>
-          ))}
+    <section className="py-24 relative overflow-hidden bg-black/50 border-y border-white/5">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex flex-col items-center gap-12">
+          <div className="text-center space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex items-center justify-center gap-3 mb-6"
+            >
+              <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-brand-primary/50" />
+              <span className="text-brand-primary font-black uppercase tracking-[0.5em] text-[10px]">Ecosystem</span>
+              <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-brand-primary/50" />
+            </motion.div>
+            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white">
+              Trusted by <span className="text-brand-primary">thousands</span> of users
+            </h2>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] max-w-md mx-auto">
+              Powering the next generation of digital experiences across the globe.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 w-full opacity-30 grayscale hover:grayscale-0 transition-all duration-700">
+            {['INTEL', 'AMD', 'SAMSUNG', 'NVIDIA', 'CISCO'].map((brand) => (
+              <div key={brand} className="flex items-center justify-center p-8 glass-card luxury-border group hover:bg-white/5 transition-all">
+                <span className="text-xl lg:text-2xl font-display font-black tracking-tighter text-white group-hover:text-brand-primary transition-colors cursor-default">{brand}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -640,10 +777,8 @@ const Plans = ({ plans }: { plans: Plan[] }) => {
   const filteredPlans = plans
     .filter(p => {
       const catMatch = (p.category || 'minecraft') === activeCategory;
-      if (activeCategory === 'minecraft') {
-        return catMatch && (p.subCategory || 'premium') === activeSubCategory;
-      }
-      return catMatch;
+      const subCatMatch = (p.subCategory || 'premium') === activeSubCategory;
+      return catMatch && subCatMatch;
     })
     .sort((a, b) => a.order - b.order);
 
@@ -692,37 +827,35 @@ const Plans = ({ plans }: { plans: Plan[] }) => {
               </button>
             </div>
 
-            {/* Sub-category Toggle for Minecraft */}
-            {activeCategory === 'minecraft' && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-center gap-4 mt-12"
+            {/* Sub-category Toggle */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-center gap-4 mt-12"
+            >
+              <button 
+                onClick={() => setActiveSubCategory('premium')}
+                className={cn(
+                  "px-8 py-3 rounded-xl font-black text-[8px] uppercase tracking-[0.3em] transition-all duration-500 border",
+                  activeSubCategory === 'premium'
+                    ? "bg-brand-primary/20 border-brand-primary/50 text-brand-primary shadow-lg shadow-brand-primary/10"
+                    : "bg-white/[0.01] border-white/5 text-slate-600 hover:text-slate-400"
+                )}
               >
-                <button 
-                  onClick={() => setActiveSubCategory('premium')}
-                  className={cn(
-                    "px-8 py-3 rounded-xl font-black text-[8px] uppercase tracking-[0.3em] transition-all duration-500 border",
-                    activeSubCategory === 'premium'
-                      ? "bg-brand-primary/20 border-brand-primary/50 text-brand-primary shadow-lg shadow-brand-primary/10"
-                      : "bg-white/[0.01] border-white/5 text-slate-600 hover:text-slate-400"
-                  )}
-                >
-                  Premium Nodes
-                </button>
-                <button 
-                  onClick={() => setActiveSubCategory('budget')}
-                  className={cn(
-                    "px-8 py-3 rounded-xl font-black text-[8px] uppercase tracking-[0.3em] transition-all duration-500 border",
-                    activeSubCategory === 'budget'
-                      ? "bg-brand-primary/20 border-brand-primary/50 text-brand-primary shadow-lg shadow-brand-primary/10"
-                      : "bg-white/[0.01] border-white/5 text-slate-600 hover:text-slate-400"
-                  )}
-                >
-                  Budget Nodes
-                </button>
-              </motion.div>
-            )}
+                {activeCategory === 'minecraft' ? 'Premium Nodes' : 'Enterprise VPS'}
+              </button>
+              <button 
+                onClick={() => setActiveSubCategory('budget')}
+                className={cn(
+                  "px-8 py-3 rounded-xl font-black text-[8px] uppercase tracking-[0.3em] transition-all duration-500 border",
+                  activeSubCategory === 'budget'
+                    ? "bg-brand-primary/20 border-brand-primary/50 text-brand-primary shadow-lg shadow-brand-primary/10"
+                    : "bg-white/[0.01] border-white/5 text-slate-600 hover:text-slate-400"
+                )}
+              >
+                {activeCategory === 'minecraft' ? 'Budget Nodes' : 'Standard VPS'}
+              </button>
+            </motion.div>
           </motion.div>
         </div>
 
@@ -814,6 +947,7 @@ const AdminDashboard = ({ plans, isAdmin, bannerSettings }: { plans: Plan[], isA
   const [isAdding, setIsAdding] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [activeTab, setActiveTab] = useState<'plans' | 'settings'>('plans');
+  const [adminFilter, setAdminFilter] = useState<'all' | 'minecraft' | 'vps' | 'minecraft-premium' | 'minecraft-budget'>('all');
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -872,6 +1006,70 @@ const AdminDashboard = ({ plans, isAdmin, bannerSettings }: { plans: Plan[], isA
     }
   };
 
+  const seedMinecraftPlans = async () => {
+    const mcPlans = [
+      { name: "Dirt Plan [STARTER]", price: "99", period: "/mo", features: ["2GB RAM", "CPU: 1 vCore", "25GB NVMe SSD", "1Gbps Network", "Best for small SMP"], popular: false, order: 1, category: 'minecraft', subCategory: 'premium' },
+      { name: "Dirt Plan+ [POPULAR]", price: "199", period: "/mo", features: ["4GB RAM", "CPU: 2 vCore", "40GB NVMe SSD", "1Gbps Network", "Smooth small server performance"], popular: true, order: 2, category: 'minecraft', subCategory: 'premium' },
+      { name: "Coal Plan [PLUS]", price: "299", period: "/mo", features: ["6GB RAM", "CPU: 2 vCore (High Priority)", "60GB NVMe SSD", "1Gbps Network", "Better stability & plugins"], popular: false, order: 3, category: 'minecraft', subCategory: 'premium' },
+      { name: "Coal Plan+ [ADVANCED]", price: "399", period: "/mo", features: ["8GB RAM", "CPU: 3 vCore", "80GB NVMe SSD", "2Gbps Network", "Mid-size community servers"], popular: false, order: 4, category: 'minecraft', subCategory: 'premium' },
+      { name: "Redstone Plan [PRO]", price: "499", period: "/mo", features: ["10GB RAM", "CPU: 4 vCore", "100GB NVMe SSD", "2Gbps Network", "Lag-free gameplay"], popular: false, order: 5, category: 'minecraft', subCategory: 'premium' },
+      { name: "Redstone Plan+ [POWER]", price: "599", period: "/mo", features: ["12GB RAM", "CPU: 5 vCore", "120GB NVMe SSD", "2Gbps Network", "Heavy plugin usage"], popular: false, order: 6, category: 'minecraft', subCategory: 'premium' },
+      { name: "Gold Plan [MOST POPULAR 🌟]", price: "799", period: "/mo", features: ["16GB RAM", "CPU: 6 vCore (Dedicated Threads)", "160GB NVMe Gen4 SSD", "5Gbps Network", "Modpacks & heavy load"], popular: true, order: 7, category: 'minecraft', subCategory: 'premium' },
+      { name: "Diamond Plan [ULTRA]", price: "999", period: "/mo", features: ["20GB RAM", "CPU: 7 vCore Dedicated", "200GB NVMe Gen4 SSD", "5Gbps Network", "High player base"], popular: false, order: 8, category: 'minecraft', subCategory: 'premium' },
+      { name: "Netherite Plan [EXTREME]", price: "1199", period: "/mo", features: ["24GB RAM", "CPU: 8 vCore Dedicated", "240GB NVMe Gen4 SSD", "5Gbps Network", "Large communities"], popular: false, order: 9, category: 'minecraft', subCategory: 'premium' },
+      { name: "Obsidian Plan [ENTERPRISE 💎]", price: "1399", period: "/mo", features: ["28GB RAM", "CPU: 10 vCore Dedicated", "300GB NVMe Gen4 SSD", "10Gbps Network", "Networks & proxy setups"], popular: false, order: 10, category: 'minecraft', subCategory: 'premium' }
+    ];
+
+    if (window.confirm("Seed Minecraft Premium plans? This will add 10 new plans.")) {
+      try {
+        for (const plan of mcPlans) {
+          await addDoc(collection(db, 'plans'), plan);
+        }
+        alert("Minecraft Premium plans seeded successfully!");
+      } catch (error) {
+        console.error("Error seeding plans:", error);
+      }
+    }
+  };
+
+  const seedMinecraftBudgetPlans = async () => {
+    const mcPlans = [
+      { name: "Dirt Budget", price: "49", period: "/mo", features: ["1GB RAM", "CPU: 1 vCore", "10GB NVMe SSD", "1Gbps Network", "Entry level hosting"], popular: false, order: 1, category: 'minecraft', subCategory: 'budget' },
+      { name: "Coal Budget", price: "89", period: "/mo", features: ["2GB RAM", "CPU: 1 vCore", "20GB NVMe SSD", "1Gbps Network", "Small SMP"], popular: true, order: 2, category: 'minecraft', subCategory: 'budget' },
+      { name: "Iron Budget", price: "149", period: "/mo", features: ["4GB RAM", "CPU: 2 vCore", "40GB NVMe SSD", "1Gbps Network", "Standard performance"], popular: false, order: 3, category: 'minecraft', subCategory: 'budget' }
+    ];
+
+    if (window.confirm("Seed Minecraft Budget plans? This will add 3 new plans.")) {
+      try {
+        for (const plan of mcPlans) {
+          await addDoc(collection(db, 'plans'), plan);
+        }
+        alert("Minecraft Budget plans seeded successfully!");
+      } catch (error) {
+        console.error("Error seeding plans:", error);
+      }
+    }
+  };
+
+  const seedVPSPlans = async () => {
+    const vpsPlans = [
+      { name: "VPS Starter", price: "299", period: "/mo", features: ["2GB RAM", "CPU: 1 vCore EPYC", "40GB NVMe SSD", "10Gbps Network", "Linux/Windows support"], popular: false, order: 1, category: 'vps', subCategory: 'premium' },
+      { name: "VPS Pro", price: "549", period: "/mo", features: ["4GB RAM", "CPU: 2 vCore EPYC", "80GB NVMe SSD", "10Gbps Network", "High performance"], popular: true, order: 2, category: 'vps', subCategory: 'premium' },
+      { name: "VPS Ultra", price: "999", period: "/mo", features: ["8GB RAM", "CPU: 4 vCore EPYC", "160GB NVMe SSD", "10Gbps Network", "Enterprise grade"], popular: false, order: 3, category: 'vps', subCategory: 'premium' }
+    ];
+
+    if (window.confirm("Seed VPS plans? This will add 3 new plans.")) {
+      try {
+        for (const plan of vpsPlans) {
+          await addDoc(collection(db, 'plans'), plan);
+        }
+        alert("VPS plans seeded successfully!");
+      } catch (error) {
+        console.error("Error seeding plans:", error);
+      }
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this infrastructure instance?")) {
       try {
@@ -881,6 +1079,17 @@ const AdminDashboard = ({ plans, isAdmin, bannerSettings }: { plans: Plan[], isA
       }
     }
   };
+
+  const filteredAdminPlans = plans
+    .filter(p => {
+      if (adminFilter === 'all') return true;
+      if (adminFilter === 'minecraft') return (p.category || 'minecraft') === 'minecraft';
+      if (adminFilter === 'vps') return (p.category || 'minecraft') === 'vps';
+      if (adminFilter === 'minecraft-premium') return (p.category || 'minecraft') === 'minecraft' && (p.subCategory || 'premium') === 'premium';
+      if (adminFilter === 'minecraft-budget') return (p.category || 'minecraft') === 'minecraft' && (p.subCategory || 'premium') === 'budget';
+      return true;
+    })
+    .sort((a, b) => a.order - b.order);
 
   return (
     <section id="admin" className="min-h-screen pt-48 pb-24 bg-black relative overflow-hidden">
@@ -915,9 +1124,38 @@ const AdminDashboard = ({ plans, isAdmin, bannerSettings }: { plans: Plan[], isA
           </div>
         </div>
 
+        {/* Admin Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-24">
+          {[
+            { label: 'Total Nodes', value: plans.length },
+            { label: 'Minecraft', value: plans.filter(p => p.category === 'minecraft').length },
+            { label: 'VPS', value: plans.filter(p => p.category === 'vps').length },
+            { label: 'Popular', value: plans.filter(p => p.popular).length }
+          ].map((stat, i) => (
+            <div key={i} className="glass-card p-8 luxury-border">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">{stat.label}</p>
+              <p className="text-4xl font-display font-black text-white">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+
         {activeTab === 'plans' ? (
           <>
-            <div className="flex justify-end mb-12">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+              <div className="flex flex-wrap gap-4">
+                {(['all', 'minecraft', 'vps', 'minecraft-premium', 'minecraft-budget'] as const).map(filter => (
+                  <button
+                    key={filter}
+                    onClick={() => setAdminFilter(filter)}
+                    className={cn(
+                      "px-6 py-2 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] transition-all",
+                      adminFilter === filter ? "bg-brand-primary text-white" : "bg-white/[0.03] text-slate-500 border border-white/5"
+                    )}
+                  >
+                    {filter.replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
               <button 
                 onClick={() => {
                   setIsAdding(!isAdding);
@@ -996,30 +1234,30 @@ const AdminDashboard = ({ plans, isAdmin, bannerSettings }: { plans: Plan[], isA
                       <option value="budget" className="bg-black">Budget / Standard</option>
                     </select>
                   </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Display Order</label>
+                    <input 
+                      type="number" 
+                      className="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-brand-primary/50 transition-all font-medium"
+                      value={formData.order}
+                      onChange={e => setFormData({...formData, order: Number(e.target.value)})}
+                      required
+                    />
+                  </div>
                   <div className="space-y-4 md:col-span-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">
                       {formData.category === 'vps' ? 'VPS Specifications (RAM, CPU, Storage, Bandwidth...)' : 'Minecraft Features (comma separated)'}
                     </label>
                     <textarea 
                       placeholder={formData.category === 'vps' ? "8GB DDR4 RAM, 4 vCores EPYC, 100GB NVMe, 10Gbps Network..." : "Unlimited Slots, Pterodactyl Panel, DDoS Protection..."}
-                      className="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-brand-primary/50 transition-all font-medium h-32"
+                      className="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-brand-primary/50 transition-all font-medium min-h-[120px]"
                       value={formData.features}
                       onChange={e => setFormData({...formData, features: e.target.value})}
                       required
                     />
                   </div>
-                  <div className="flex items-center gap-12">
-                    <div className="space-y-4">
-                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Priority Order</label>
-                      <input 
-                        type="number" 
-                        className="w-32 bg-white/[0.02] border border-white/5 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-brand-primary/50 transition-all font-medium"
-                        value={formData.order}
-                        onChange={e => setFormData({...formData, order: Number(e.target.value)})}
-                        required
-                      />
-                    </div>
-                    <label className="flex items-center gap-4 cursor-pointer group mt-8">
+                  <div className="md:col-span-2">
+                    <label className="flex items-center gap-4 cursor-pointer group">
                       <div className={cn(
                         "w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center transition-all",
                         formData.popular ? "bg-brand-primary border-brand-primary" : "bg-white/[0.02] group-hover:border-white/20"
@@ -1032,20 +1270,20 @@ const AdminDashboard = ({ plans, isAdmin, bannerSettings }: { plans: Plan[], isA
                         checked={formData.popular}
                         onChange={e => setFormData({...formData, popular: e.target.checked})}
                       />
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 group-hover:text-white transition-colors">Flag as Popular</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 group-hover:text-white transition-colors">Mark as Most Popular</span>
                     </label>
                   </div>
-                  <div className="md:col-span-2 flex justify-end">
-                    <button type="submit" className="btn-premium premium-gradient px-16 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl">
-                      {editingPlan ? 'Commit Changes' : 'Provision Node'}
+                  <div className="md:col-span-2 pt-6">
+                    <button type="submit" className="w-full py-5 rounded-2xl premium-gradient text-white font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl shadow-brand-primary/40">
+                      {editingPlan ? 'Commit Changes' : 'Provision Infrastructure'}
                     </button>
                   </div>
                 </form>
               </motion.div>
             )}
 
-            <div className="grid grid-cols-1 gap-6">
-              {plans.sort((a, b) => a.order - b.order).map(plan => (
+            <div className="grid grid-cols-1 gap-6 mb-24">
+              {filteredAdminPlans.map(plan => (
                 <div key={plan.id} className="glass-card p-8 flex flex-col md:flex-row items-center justify-between gap-8 luxury-border group">
                   <div className="flex items-center gap-10">
                     <div className="w-20 h-20 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center justify-center font-black text-brand-primary text-2xl shadow-inner group-hover:scale-110 transition-transform duration-500">
@@ -1075,6 +1313,7 @@ const AdminDashboard = ({ plans, isAdmin, bannerSettings }: { plans: Plan[], isA
                           subCategory: plan.subCategory || 'premium'
                         });
                         setIsAdding(false);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-slate-500 hover:text-brand-primary hover:border-brand-primary/30 hover:bg-white/[0.08] transition-all"
                     >
@@ -1089,6 +1328,30 @@ const AdminDashboard = ({ plans, isAdmin, bannerSettings }: { plans: Plan[], isA
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="glass-card p-12 luxury-border">
+              <h4 className="text-3xl font-display font-black mb-8 tracking-tighter text-white">System Actions</h4>
+              <div className="flex flex-wrap gap-6">
+                <button 
+                  onClick={seedMinecraftPlans}
+                  className="px-8 py-4 rounded-xl bg-white/[0.03] border border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-white hover:bg-white/[0.08] transition-all"
+                >
+                  Seed MC Premium
+                </button>
+                <button 
+                  onClick={seedMinecraftBudgetPlans}
+                  className="px-8 py-4 rounded-xl bg-white/[0.03] border border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-white hover:bg-white/[0.08] transition-all"
+                >
+                  Seed MC Budget
+                </button>
+                <button 
+                  onClick={seedVPSPlans}
+                  className="px-8 py-4 rounded-xl bg-white/[0.03] border border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-white hover:bg-white/[0.08] transition-all"
+                >
+                  Seed VPS Plans
+                </button>
+              </div>
             </div>
           </>
         ) : (
@@ -1188,15 +1451,6 @@ const Footer = () => {
               <li><a href="#features" className="hover:text-brand-primary transition-colors">Features</a></li>
               <li><a href="#plans" className="hover:text-brand-primary transition-colors">Plans</a></li>
               <li><a href={DISCORD_LINK} className="hover:text-brand-primary transition-colors">Support</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-display font-black mb-8 text-white tracking-widest uppercase text-[10px]">Legal</h4>
-            <ul className="space-y-5 text-slate-500 font-medium tracking-tight">
-              <li><a href="#" className="hover:text-brand-primary transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-brand-primary transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-brand-primary transition-colors">Refund Policy</a></li>
             </ul>
           </div>
         </div>
